@@ -21,7 +21,7 @@ class InitGameParams(BaseModel):
     game_id: uuid.UUID = Field(alias='game_id')
 
 
-@middleware(logger)
+@middleware(logger=logger)
 def handler(event, context):
     try:
         params = InitGameParams.model_validate_json(event['body'])
@@ -59,5 +59,6 @@ def handler(event, context):
         'statusCode': 200,
         'body': {
             'chat_channel_access_token': chat_channel_access_token,
+            'live_detail': live_detail,
         }
     }

@@ -3,14 +3,17 @@ import logging
 import traceback
 
 
-def middleware(logger: logging.Logger | None = None):
-    if logger is None:
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
-
+def middleware(*, logger: logging.Logger):
     def outer(func):
         def inner(event, context):
-            logger.info(json.dumps(event))
+            logger.info(
+                json.dumps(
+                    {
+                        'type': 'REQUEST',
+                        'event': event,
+                    }
+                )
+            )
 
             try:
                 res = func(event, context)
@@ -18,6 +21,7 @@ def middleware(logger: logging.Logger | None = None):
                 logger.error(
                     json.dumps(
                         {
+                            'type': 'UNHANDLED_EXCEPTION',
                             'error': str(e),
                             'traceback': traceback.format_exc()
                         },
@@ -30,9 +34,25 @@ def middleware(logger: logging.Logger | None = None):
                 }
 
             res = res or {}
+            body = res.get('body', '')
+            if isinstance(body, dict):
+                res['body'] = json.dumps(body, ensure_ascii=False)
+            elif isinstance(body, str):
+                res['body'] = body
             res['headers'] = res.get('headers', {})
-            res['headers']['Access-Control-Allow-Origin'] = 'https://modurank.junah.dev'
+            res['headers']['Access-Control-Allow-Origin'] = '*'
             res['headers']['Content-Type'] = 'application/json'
+
+            logger.info(
+                json.dumps(
+                    {
+                        'type': 'RESPONSE',
+                        'response': res,
+                    },
+                    ensure_ascii=False
+                )
+            )
+
             return res
 
         return inner
