@@ -1,0 +1,91 @@
+service: modurank
+
+provider:
+  name: aws
+  runtime: python3.10
+  region: ap-northeast-2
+  profile: modurank
+  logRetentionInDays: 14
+  architecture: x86_64
+  memorySize: 128
+  timeout: 15
+  versionFunctions: false
+  stage: prod
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:ap-northeast-2:*:*"
+    - Effect: Allow
+      Action:
+        - kms:Decrypt
+      Resource: "arn:aws:kms:*:*:*"
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "arn:aws:cloudwatch:*:*:*"
+
+functions:
+  init_game:
+    handler: lambdas/init_game.handler
+    name: init_room
+    events:
+      - http:
+          path: rooms
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: MoDuRank-API
+        Description: API for modurank.junah.dev
+
+    ApiGatewayCustomDomain:
+      Type: AWS::ApiGateway::DomainName
+      Properties:
+        DomainName: api.modurank.junah.dev
+        RegionalCertificateArn: arn:aws:acm:ap-northeast-2:529088284282:certificate/b05a5dd5-9717-420b-8708-0afa99830c0d
+        EndpointConfiguration:
+          Types:
+            - REGIONAL
+        SecurityPolicy: TLS_1_2
+
+    ApiGatewayBasePathMapping:
+      Type: AWS::ApiGateway::BasePathMapping
+      Properties:
+        DomainName:
+          Ref: ApiGatewayCustomDomain
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Stage: ${self:provider.stage}
+
+package:
+  include:
+    - "lambdas/**"
+    - "shared/**"
+    - "poetry.lock"
+    - "pyproject.toml"
+  exclude:
+    - "node_modules/**"
+    - "venv/**"
+    - "serverless.yml"
+    - ".serverless/**"
+    - ".ruff_cache/**"
+
+custom:
+  pythonRequirements:
+    slim: true
+    usePoetry: true
+
+plugins:
+  - serverless-python-requirements
