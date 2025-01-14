@@ -10,6 +10,7 @@ exclude = ["scripts"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+pydantic = "^2.10.5"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.9.1"
