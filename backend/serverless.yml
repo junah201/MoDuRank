@@ -33,8 +33,8 @@ provider:
       Resource: "arn:aws:cloudwatch:*:*:*"
 
 functions:
-  init_game:
-    handler: lambdas/init_game.handler
+  init_room:
+    handler: lambdas/init_room.handler
     name: init_room
     events:
       - http:
