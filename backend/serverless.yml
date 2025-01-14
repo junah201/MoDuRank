@@ -6,7 +6,7 @@ provider:
   region: ap-northeast-2
   profile: modurank
   logRetentionInDays: 14
-  architecture: x86_64
+  architecture: arm64
   memorySize: 128
   timeout: 15
   versionFunctions: false
@@ -25,12 +25,6 @@ provider:
       Action:
         - kms:Decrypt
       Resource: "arn:aws:kms:*:*:*"
-    - Effect: Allow
-      Action:
-        - logs:CreateLogGroup
-        - logs:CreateLogStream
-        - logs:PutLogEvents
-      Resource: "arn:aws:cloudwatch:*:*:*"
 
 functions:
   init_room:
@@ -62,6 +56,9 @@ resources:
 
     ApiGatewayBasePathMapping:
       Type: AWS::ApiGateway::BasePathMapping
+      DependsOn:
+        - ApiGatewayCustomDomain
+        - ApiGatewayRestApi
       Properties:
         DomainName:
           Ref: ApiGatewayCustomDomain
@@ -84,8 +81,16 @@ package:
 
 custom:
   pythonRequirements:
-    slim: true
     usePoetry: true
+    requirePoetryLockFile: false
+    useStaticCache: false
+    useDownloadCache: false
+    pipCmdExtraArgs:
+      - "--platform manylinux2014_aarch64"
+      - "--implementation cp"
+      - "--python-version 3.10"
+      - "--only-binary=:all:"
+      - "--upgrade"
 
 plugins:
   - serverless-python-requirements
