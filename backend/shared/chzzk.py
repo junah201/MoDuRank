@@ -3,6 +3,8 @@ import logging
 import urllib.request
 from typing import TypedDict
 
+USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
+
 
 class ChzzkChannel(TypedDict):
     channelId: str
@@ -60,6 +62,7 @@ def get_live_detail(chzzk_id: str, *, logger: logging.Logger | None = None) -> C
     request = urllib.request.Request(url, method='GET')
     request.add_header('Content-Type', 'application/json')
     request.add_header('Origin', 'https://chzzk.naver.com')
+    request.add_header('User-Agent', USER_AGENT)
 
     with urllib.request.urlopen(request) as response:
         data = json.loads(response.read().decode('utf-8'))
@@ -95,6 +98,7 @@ def get_chat_channel_access_token(chat_channel_id: str, *, logger: logging.Logge
     request = urllib.request.Request(url, method='GET')
     request.add_header('Content-Type', 'application/json')
     request.add_header('Origin', 'https://chzzk.naver.com')
+    request.add_header('User-Agent', USER_AGENT)
 
     with urllib.request.urlopen(request) as response:
         data = json.loads(response.read().decode('utf-8'))
