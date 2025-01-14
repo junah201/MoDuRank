@@ -54,7 +54,7 @@ resources:
       Type: AWS::ApiGateway::DomainName
       Properties:
         DomainName: api.modurank.junah.dev
-        RegionalCertificateArn: arn:aws:acm:ap-northeast-2:529088284282:certificate/b05a5dd5-9717-420b-8708-0afa99830c0d
+        RegionalCertificateArn: arn:aws:acm:ap-northeast-2:529088284282:certificate/2b22fc86-4182-411b-8fea-2fd58a4ffc35
         EndpointConfiguration:
           Types:
             - REGIONAL
