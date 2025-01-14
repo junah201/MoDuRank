@@ -1,4 +1,4 @@
 #!/bin/sh -e
 set -x
-ruff check lambdas shared scripts --fix
-ruff format lambdas shared scripts scripts
+poetry run ruff check lambdas shared scripts --fix
+poetry ruff format lambdas shared scripts scripts
