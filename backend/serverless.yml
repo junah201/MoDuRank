@@ -25,6 +25,11 @@ provider:
       Action:
         - kms:Decrypt
       Resource: "arn:aws:kms:*:*:*"
+  logs:
+    lambda:
+      logFormat: JSON
+      applicationLogLevel: INFO
+      systemLogLevel: INFO
 
 functions:
   init_room:

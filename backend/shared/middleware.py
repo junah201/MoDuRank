@@ -7,26 +7,21 @@ def middleware(*, logger: logging.Logger):
     def outer(func):
         def inner(event, context):
             logger.info(
-                json.dumps(
-                    {
-                        'type': 'REQUEST',
-                        'event': event,
-                    }
-                )
+                {
+                    'type': 'REQUEST',
+                    'event': event,
+                }
             )
 
             try:
                 res = func(event, context)
             except Exception as e:
                 logger.error(
-                    json.dumps(
-                        {
-                            'type': 'UNHANDLED_EXCEPTION',
-                            'error': str(e),
-                            'traceback': traceback.format_exc()
-                        },
-                        ensure_ascii=False
-                    )
+                    {
+                        'type': 'UNHANDLED_EXCEPTION',
+                        'error': str(e),
+                        'traceback': traceback.format_exc()
+                    },
                 )
                 res = {
                     'statusCode': 500,
@@ -34,24 +29,23 @@ def middleware(*, logger: logging.Logger):
                 }
 
             res = res or {}
+            res['headers'] = res.get('headers', {})
+            res['headers']['Access-Control-Allow-Origin'] = '*'
+            res['headers']['Content-Type'] = 'application/json'
+
+            # Log response
+            logger.info(
+                {
+                    'type': 'RESPONSE',
+                    'response': res,
+                }
+            )
+
             body = res.get('body', '')
             if isinstance(body, dict):
                 res['body'] = json.dumps(body, ensure_ascii=False)
             elif isinstance(body, str):
                 res['body'] = body
-            res['headers'] = res.get('headers', {})
-            res['headers']['Access-Control-Allow-Origin'] = '*'
-            res['headers']['Content-Type'] = 'application/json'
-
-            logger.info(
-                json.dumps(
-                    {
-                        'type': 'RESPONSE',
-                        'response': res,
-                    },
-                    ensure_ascii=False
-                )
-            )
 
             return res
 

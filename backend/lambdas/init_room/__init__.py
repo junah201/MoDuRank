@@ -13,7 +13,7 @@ from shared import (
 
 dynamodb = boto3.client('dynamodb')
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class InitGameParams(BaseModel):
