@@ -11,6 +11,8 @@ provider:
   timeout: 15
   versionFunctions: false
   stage: prod
+  environment:
+    DYNAMODB_TABLE: modurank-db
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -70,6 +72,31 @@ resources:
         RestApiId:
           Ref: ApiGatewayRestApi
         Stage: ${self:provider.stage}
+
+    DynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: GSI-SK
+            KeySchema:
+              - AttributeName: SK
+                KeyType: HASH
+              - AttributeName: PK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
 
 package:
   include:
