@@ -16,15 +16,15 @@ dynamodb = boto3.client('dynamodb')
 logger = get_logger()
 
 
-class InitGameParams(BaseModel):
+class InitRoomParams(BaseModel):
     chzzk_id: str = Field(min_length=32, max_length=32, alias='chzzk_id')
     game_id: uuid.UUID = Field(alias='game_id')
 
 
 @middleware(logger=logger)
-def handler(event, context):
+def handler(event, _context):
     try:
-        params = InitGameParams.model_validate_json(event['body'])
+        params = InitRoomParams.model_validate_json(event['body'])
     except ValidationError as e:
         return {
             'statusCode': 400,
