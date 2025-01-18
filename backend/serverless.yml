@@ -14,7 +14,6 @@ provider:
   stage: prod
   environment:
     DYNAMODB_TABLE: modurank-db
-    PASSWORD_SALT: ${env:PASSWORD_SALT}
   iamRoleStatements:
     - Effect: Allow
       Action:

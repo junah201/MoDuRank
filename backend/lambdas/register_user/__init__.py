@@ -14,8 +14,6 @@ from pydantic import (
 
 from shared import get_logger, get_password_hash, middleware
 
-JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
-
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
 
