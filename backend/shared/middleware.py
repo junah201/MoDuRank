@@ -8,8 +8,8 @@ def middleware(*, logger: logging.Logger):
         def inner(event, context):
             logger.info(
                 {
-                    'type': 'REQUEST',
-                    'event': event,
+                    "type": "REQUEST",
+                    "event": event,
                 }
             )
 
@@ -18,34 +18,34 @@ def middleware(*, logger: logging.Logger):
             except Exception as e:
                 logger.error(
                     {
-                        'type': 'UNHANDLED_EXCEPTION',
-                        'error': str(e),
-                        'traceback': traceback.format_exc()
+                        "type": "UNHANDLED_EXCEPTION",
+                        "error": str(e),
+                        "traceback": traceback.format_exc(),
                     },
                 )
                 res = {
-                    'statusCode': 500,
-                    'body': json.dumps(str(e), ensure_ascii=False),
+                    "statusCode": 500,
+                    "body": json.dumps(str(e), ensure_ascii=False),
                 }
 
             res = res or {}
-            res['headers'] = res.get('headers', {})
-            res['headers']['Access-Control-Allow-Origin'] = '*'
-            res['headers']['Content-Type'] = 'application/json'
+            res["headers"] = res.get("headers", {})
+            res["headers"]["Access-Control-Allow-Origin"] = "*"
+            res["headers"]["Content-Type"] = "application/json"
 
             # Log response
             logger.info(
                 {
-                    'type': 'RESPONSE',
-                    'response': res,
+                    "type": "RESPONSE",
+                    "response": res,
                 }
             )
 
-            body = res.get('body', '')
+            body = res.get("body", "")
             if isinstance(body, dict):
-                res['body'] = json.dumps(body, ensure_ascii=False)
+                res["body"] = json.dumps(body, ensure_ascii=False)
             elif isinstance(body, str):
-                res['body'] = body
+                res["body"] = body
 
             return res
 

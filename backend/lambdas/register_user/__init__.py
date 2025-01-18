@@ -66,9 +66,7 @@ def handler(event, _context):
     if "Items" in response and len(response["Items"]) > 0:
         return {
             "statusCode": 409,
-            "body": {
-                "detail": "해당 이메일로 가입된 계정이 이미 존재합니다."
-            }
+            "body": {"detail": "해당 이메일로 가입된 계정이 이미 존재합니다."},
         }
 
     user_data = body.model_dump()
