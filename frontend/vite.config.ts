@@ -10,4 +10,7 @@ export default defineConfig({
     },
   },
   base: "/",
+  build: {
+    outDir: path.join(__dirname, "build"),
+  },
 });
