@@ -15,6 +15,8 @@ provider:
   environment:
     DYNAMODB_TABLE: modurank-db
     JWT_SECRET_KEY: ${env:JWT_SECRET_KEY}
+  httpApi:
+    id: hrzbe9bbgf
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -40,57 +42,75 @@ functions:
     handler: lambdas/init_room.handler
     name: init_room
     events:
-      - http:
-          path: rooms
+      - httpApi:
+          path: /rooms
           method: post
-          cors: true
 
   register_user:
     handler: lambdas/register_user.handler
     name: register_user
     events:
-      - http:
-          path: users
+      - httpApi:
+          path: /users
           method: post
-          cors: true
 
   login:
     handler: lambdas/login.handler
     name: login
     events:
-      - http:
-          path: login
+      - httpApi:
+          path: /login
           method: post
-          cors: true
 
 resources:
   Resources:
-    ApiGatewayRestApi:
-      Type: AWS::ApiGateway::RestApi
+    ApiGatewayHttpApi:
+      Type: AWS::ApiGatewayV2::Api
       Properties:
         Name: MoDuRank-API
         Description: API for modurank.junah.dev
+        ProtocolType: HTTP
+        DisableExecuteApiEndpoint: true
+        CorsConfiguration:
+          AllowOrigins:
+            - "https://modurank.junah.dev"
+            - "http://localhost:5173"
+          AllowMethods:
+            - "GET"
+            - "POST"
+            - "PUT"
+            - "PATCH"
+            - "DELETE"
+            - "OPTIONS"
+          AllowCredentials: true
 
     ApiGatewayCustomDomain:
-      Type: AWS::ApiGateway::DomainName
+      Type: AWS::ApiGatewayV2::DomainName
       Properties:
         DomainName: api.modurank.junah.dev
-        RegionalCertificateArn: arn:aws:acm:ap-northeast-2:529088284282:certificate/2b22fc86-4182-411b-8fea-2fd58a4ffc35
-        EndpointConfiguration:
-          Types:
-            - REGIONAL
-        SecurityPolicy: TLS_1_2
+        DomainNameConfigurations:
+          - CertificateArn: arn:aws:acm:ap-northeast-2:529088284282:certificate/2b22fc86-4182-411b-8fea-2fd58a4ffc35
+            EndpointType: REGIONAL
+            SecurityPolicy: TLS_1_2
 
-    ApiGatewayBasePathMapping:
-      Type: AWS::ApiGateway::BasePathMapping
+    ApiGatewayStage:
+      Type: AWS::ApiGatewayV2::Stage
+      DependsOn:
+        - ApiGatewayHttpApi
+        - ApiGatewayCustomDomain
+      Properties:
+        ApiId: !Ref ApiGatewayHttpApi
+        StageName: ${self:provider.stage}
+        AutoDeploy: true
+
+    ApiGatewayMapping:
+      Type: AWS::ApiGatewayV2::ApiMapping
       DependsOn:
         - ApiGatewayCustomDomain
-        - ApiGatewayRestApi
+        - ApiGatewayHttpApi
       Properties:
-        DomainName:
-          Ref: ApiGatewayCustomDomain
-        RestApiId:
-          Ref: ApiGatewayRestApi
+        ApiId: !Ref ApiGatewayHttpApi
+        DomainName: !Ref ApiGatewayCustomDomain
         Stage: ${self:provider.stage}
 
     DynamoDBTable:
