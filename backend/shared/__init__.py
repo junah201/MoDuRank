@@ -2,7 +2,7 @@ from .chzzk import get_chat_channel_access_token, get_live_detail
 from .dynamodb import dynamo_to_python, python_to_dynamo
 from .logger import get_logger
 from .middleware import middleware
-from .security import get_password_hash, verify_password
+from .security import create_access_token, get_password_hash, verify_password
 
 __all__ = [
     # chzzk.py
@@ -16,6 +16,7 @@ __all__ = [
     "dynamo_to_python",
     "python_to_dynamo",
     # security.py
+    "create_access_token",
     "get_password_hash",
     "verify_password",
 ]
