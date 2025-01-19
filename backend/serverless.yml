@@ -61,6 +61,13 @@ functions:
       - httpApi:
           path: /users/me
           method: get
+  get_user_by_id:
+    handler: lambdas/get_user_by_id.handler
+    name: get_user_by_id
+    events:
+      - httpApi:
+          path: /users/{user_id}
+          method: get
 
   login:
     handler: lambdas/login.handler
