@@ -46,7 +46,7 @@ def handler(event, _context):
 
     user = response["Items"][0]
 
-    if not verify_password(body.password, user["password"]):
+    if not verify_password(body.password, user["password"]):  # type: ignore
         return {
             "statusCode": 401,
             "body": {
