@@ -11,9 +11,7 @@ class JsonFormatter(logging.Formatter):
         log_message = {
             "requestId": getattr(record, "aws_request_id", None),
             "level": record.levelname,
-            "timestamp": time.strftime(
-                "%Y-%m-%dT%H:%M:%S.%.3fZ", time.localtime(record.created)
-            ),
+            "timestamp": f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(record.created))}.{int(record.msecs):03d}Z",
             "line": f"{record.pathname}/{record.module}::{record.funcName}::{record.lineno}",
         }
 
