@@ -35,9 +35,7 @@ def handler(_event, _context, body: Annotated[InitRoomBody, Body]):
         }
 
     chat_channel_id = live_detail["chatChannelId"]
-    chat_channel_access_token = get_chat_channel_access_token(
-        chat_channel_id, logger=logger
-    )
+    chat_channel_access_token = get_chat_channel_access_token(chat_channel_id, logger=logger)
 
     if chat_channel_access_token is None:
         return {

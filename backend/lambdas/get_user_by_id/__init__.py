@@ -29,9 +29,7 @@ class UserPublic(BaseModel):
     logger=logger,
     permission=lambda permission: has_permission(permission, Permission.ADMIN),
 )
-def handler(
-    _event, _context, path_params: Annotated[GetUserByIdPathParams, PathParams]
-):
+def handler(_event, _context, path_params: Annotated[GetUserByIdPathParams, PathParams]):
     response = table.get_item(
         Key={
             "PK": f"USER#{path_params.user_id}",

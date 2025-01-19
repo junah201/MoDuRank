@@ -7,9 +7,7 @@ class Permission(int, Enum):
     ADMIN = 2**3
 
 
-def has_permission(
-    user_permission: int | Decimal, required_permission: Permission
-) -> bool:
+def has_permission(user_permission: int | Decimal, required_permission: Permission) -> bool:
     if isinstance(user_permission, Decimal):
         user_permission = int(user_permission)
 

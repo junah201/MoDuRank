@@ -22,9 +22,7 @@ def middleware(*, logger: logging.Logger):
             signature = inspect.signature(func)
 
             if len(signature.parameters) < 2:
-                raise ValueError(
-                    "handler function must have at least 2 parameters for event, _context"
-                )
+                raise ValueError("handler function must have at least 2 parameters for event, _context")
 
             parsed_data = {}
             for name, param in signature.parameters.items():
@@ -40,30 +38,20 @@ def middleware(*, logger: logging.Logger):
                 print(f"{base_type=}, {type(base_type)=}")
 
                 if not issubclass(metadata, Component):
-                    raise ValueError(
-                        "Annotated type hint must be subclass of Component"
-                    )
+                    raise ValueError("Annotated type hint must be subclass of Component")
 
                 if not issubclass(base_type, BaseModel):
-                    raise ValueError(
-                        "Annotated type hint must be subclass of BaseModel"
-                    )
+                    raise ValueError("Annotated type hint must be subclass of BaseModel")
 
                 try:
                     if issubclass(metadata, Body):
                         parsed_data[name] = base_type.model_validate_json(event["body"])
                     elif issubclass(metadata, PathParams):
-                        parsed_data[name] = base_type.model_validate_json(
-                            event["pathParameters"]
-                        )
+                        parsed_data[name] = base_type.model_validate_json(event["pathParameters"])
                     elif issubclass(metadata, Parameter):
-                        parsed_data[name] = base_type.model_validate_json(
-                            event["queryStringParameters"]
-                        )
+                        parsed_data[name] = base_type.model_validate_json(event["queryStringParameters"])
                     else:
-                        raise ValueError(
-                            "Invalid metadata type. Must be one of Body, PathParams, Parameter"
-                        )
+                        raise ValueError("Invalid metadata type. Must be one of Body, PathParams, Parameter")
                 except ValidationError as e:
                     return {
                         "statusCode": 422,

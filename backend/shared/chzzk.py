@@ -50,9 +50,7 @@ class Following(TypedDict):
     streamer: Streamer
 
 
-def get_live_detail(
-    chzzk_id: str, *, logger: logging.Logger | None = None
-) -> ChzzkLive | None:
+def get_live_detail(chzzk_id: str, *, logger: logging.Logger | None = None) -> ChzzkLive | None:
     url = f"https://api.chzzk.naver.com/service/v2/channels/{chzzk_id}/live-detail"
 
     request = urllib.request.Request(url, method="GET")
@@ -88,7 +86,9 @@ class ChatChannelAccessToken(TypedDict):
 def get_chat_channel_access_token(
     chat_channel_id: str, *, logger: logging.Logger | None = None
 ) -> ChatChannelAccessToken | None:
-    url = f"https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId={chat_channel_id}&chatType=STREAMING"
+    url = (
+        f"https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId={chat_channel_id}&chatType=STREAMING"
+    )
 
     request = urllib.request.Request(url, method="GET")
     request.add_header("Content-Type", "application/json")

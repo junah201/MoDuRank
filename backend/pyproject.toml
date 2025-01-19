@@ -21,6 +21,7 @@ boto3-stubs = {version = "1.36.2", extras = ["dynamodb", "s3"]}
 
 [tool.ruff]
 target-version = "py310"
+line-length = 120
 
 [tool.ruff.lint]
 select = [
