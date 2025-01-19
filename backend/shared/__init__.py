@@ -4,6 +4,7 @@ from .dynamodb import dynamo_to_python, python_to_dynamo
 from .json import JsonEncoder
 from .logger import get_logger
 from .middleware import middleware
+from .permission import Permission, has_permission
 from .security import (
     create_access_token,
     get_password_hash,
@@ -26,6 +27,9 @@ __all__ = [
     # dynamodb.py
     "dynamo_to_python",
     "python_to_dynamo",
+    # permission.py
+    "has_permission",
+    "Permission",
     # security.py
     "create_access_token",
     "verify_access_token",

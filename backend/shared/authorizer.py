@@ -1,17 +1,26 @@
 import logging
 import os
+from collections.abc import Callable
+from decimal import Decimal
 
 import boto3
 import jwt
 
+from shared.permission import Permission, has_permission
 from shared.security import verify_access_token
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
 
 
+def default_permission_checker(permission: int | Decimal):
+    return has_permission(permission, Permission.USER)
+
+
 def authorizer(*, logger: logging.Logger):
-    def outer(func):
+    def outer(
+        func, permission: Callable[[int | Decimal], bool] = default_permission_checker
+    ):
         def inner(event, context):
             token = event.get("headers", {}).get("authorization", None)
 
@@ -43,6 +52,15 @@ def authorizer(*, logger: logging.Logger):
                     }
 
                 user = response["Item"]
+
+                if not permission(user.get("permission", 0)):  # type: ignore
+                    return {
+                        "statusCode": 403,
+                        "body": {
+                            "detail": "권한이 없습니다.",
+                        },
+                    }
+
                 event["requestContext"] = event.get("requestContext", {})
                 event["requestContext"]["user"] = user
 

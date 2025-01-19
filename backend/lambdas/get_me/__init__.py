@@ -15,6 +15,7 @@ class UserPublic(BaseModel):
     user_id: str
     email: str
     nickname: str
+    permission: int
 
 
 @middleware(logger=logger)
