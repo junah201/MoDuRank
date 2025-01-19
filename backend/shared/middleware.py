@@ -35,7 +35,6 @@ def middleware(*, logger: logging.Logger):
                     continue
 
                 base_type, metadata, *_ = get_args(annotation)
-                print(f"{base_type=}, {type(base_type)=}")
 
                 if not issubclass(metadata, Component):
                     raise ValueError("Annotated type hint must be subclass of Component")
