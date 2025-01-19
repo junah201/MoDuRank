@@ -1,9 +1,10 @@
 import os
+from typing import Annotated
 
 import boto3
-from pydantic import BaseModel, EmailStr, Field, ValidationError
+from pydantic import BaseModel, EmailStr, Field
 
-from shared import create_access_token, get_logger, middleware, verify_password
+from shared import Body, create_access_token, get_logger, middleware, verify_password
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
@@ -17,17 +18,7 @@ class LoginBody(BaseModel):
 
 
 @middleware(logger=logger)
-def handler(event, _context):
-    try:
-        body = LoginBody.model_validate_json(event["body"])
-    except ValidationError as e:
-        return {
-            "statusCode": 422,
-            "body": {
-                "detail": str(e),
-            },
-        }
-
+def handler(_event, _context, body: Annotated[LoginBody, Body]):
     response = table.query(
         IndexName="GSI-email",
         KeyConditionExpression="email = :email AND begins_with(PK, :PK)",

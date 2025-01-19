@@ -1,5 +1,6 @@
 import os
 import uuid
+from typing import Annotated
 
 import boto3
 from pydantic import (
@@ -7,11 +8,10 @@ from pydantic import (
     EmailStr,
     Field,
     PrivateAttr,
-    ValidationError,
     computed_field,
 )
 
-from shared import get_logger, get_password_hash, middleware
+from shared import Body, get_logger, get_password_hash, middleware
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
@@ -48,17 +48,7 @@ class RegisterUserBody(BaseModel):
 
 
 @middleware(logger=logger)
-def handler(event, _context):
-    try:
-        body = RegisterUserBody.model_validate_json(event["body"])
-    except ValidationError as e:
-        return {
-            "statusCode": 422,
-            "body": {
-                "detail": str(e),
-            },
-        }
-
+def handler(_event, _context, body: Annotated[RegisterUserBody, Body]):
     response = table.query(
         IndexName="GSI-email",
         KeyConditionExpression="email = :email AND begins_with(PK, :PK)",

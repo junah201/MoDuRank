@@ -1,13 +1,17 @@
+import inspect
 import json
 import logging
 import traceback
 
+from pydantic import BaseModel, ValidationError
+
 from shared.json import JsonEncoder
+from shared.parser import Body, Component, Parameter, PathParams, get_args, is_annotated
 
 
 def middleware(*, logger: logging.Logger):
     def outer(func):
-        def inner(event, context):
+        def inner(event, _context):
             logger.info(
                 {
                     "type": "REQUEST",
@@ -15,8 +19,61 @@ def middleware(*, logger: logging.Logger):
                 }
             )
 
+            signature = inspect.signature(func)
+
+            if len(signature.parameters) < 2:
+                raise ValueError(
+                    "handler function must have at least 2 parameters for event, _context"
+                )
+
+            parsed_data = {}
+            for name, param in signature.parameters.items():
+                if name in ["event", "_event", "context", "_context"]:
+                    continue
+
+                annotation = param.annotation
+
+                if not is_annotated(annotation):
+                    continue
+
+                base_type, metadata, *_ = get_args(annotation)
+                print(f"{base_type=}, {type(base_type)=}")
+
+                if not issubclass(metadata, Component):
+                    raise ValueError(
+                        "Annotated type hint must be subclass of Component"
+                    )
+
+                if not issubclass(base_type, BaseModel):
+                    raise ValueError(
+                        "Annotated type hint must be subclass of BaseModel"
+                    )
+
+                try:
+                    if issubclass(metadata, Body):
+                        parsed_data[name] = base_type.model_validate_json(event["body"])
+                    elif issubclass(metadata, PathParams):
+                        parsed_data[name] = base_type.model_validate_json(
+                            event["pathParameters"]
+                        )
+                    elif issubclass(metadata, Parameter):
+                        parsed_data[name] = base_type.model_validate_json(
+                            event["queryStringParameters"]
+                        )
+                    else:
+                        raise ValueError(
+                            "Invalid metadata type. Must be one of Body, PathParams, Parameter"
+                        )
+                except ValidationError as e:
+                    return {
+                        "statusCode": 422,
+                        "body": {
+                            "detail": str(e),
+                        },
+                    }
+
             try:
-                res = func(event, context)
+                res = func(event, _context, **parsed_data)
             except Exception as e:
                 logger.error(
                     {

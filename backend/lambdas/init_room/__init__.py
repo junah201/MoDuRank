@@ -1,9 +1,11 @@
 import uuid
+from typing import Annotated
 
 import boto3
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from shared import (
+    Body,
     get_chat_channel_access_token,
     get_live_detail,
     get_logger,
@@ -21,18 +23,8 @@ class InitRoomBody(BaseModel):
 
 
 @middleware(logger=logger)
-def handler(event, _context):
-    try:
-        params = InitRoomBody.model_validate_json(event["body"])
-    except ValidationError as e:
-        return {
-            "statusCode": 422,
-            "body": {
-                "detail": str(e),
-            },
-        }
-
-    live_detail = get_live_detail(params.chzzk_id, logger=logger)
+def handler(_event, _context, body: Annotated[InitRoomBody, Body]):
+    live_detail = get_live_detail(body.chzzk_id, logger=logger)
 
     if live_detail is None:
         return {
