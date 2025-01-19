@@ -61,6 +61,7 @@ functions:
       - httpApi:
           path: /users/me
           method: get
+
   get_user_by_id:
     handler: lambdas/get_user_by_id.handler
     name: get_user_by_id
@@ -75,6 +76,14 @@ functions:
     events:
       - httpApi:
           path: /login
+          method: post
+
+  post_game:
+    handler: lambdas/post_game.handler
+    name: post_game
+    events:
+      - httpApi:
+          path: /games
           method: post
 
 resources:

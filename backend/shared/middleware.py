@@ -45,11 +45,11 @@ def middleware(*, logger: logging.Logger):
 
                 try:
                     if issubclass(metadata, Body):
-                        parsed_data[name] = base_type.model_validate_json(event["body"])
+                        parsed_data[name] = base_type.model_validate_json(event.get("body", "{}"))
                     elif issubclass(metadata, PathParams):
-                        parsed_data[name] = base_type.model_validate_json(event["pathParameters"])
+                        parsed_data[name] = base_type.model_validate_json(event.get("pathParameters", "{}"))
                     elif issubclass(metadata, Parameter):
-                        parsed_data[name] = base_type.model_validate_json(event["queryStringParameters"])
+                        parsed_data[name] = base_type.model_validate_json(event.get("queryStringParameters", "{}"))
                     else:
                         raise ValueError("Invalid metadata type. Must be one of Body, PathParams, Parameter")
                 except ValidationError as e:
