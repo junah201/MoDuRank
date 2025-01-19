@@ -3,6 +3,8 @@ import logging
 import time
 import traceback
 
+from shared.json import JsonEncoder
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
@@ -25,7 +27,7 @@ class JsonFormatter(logging.Formatter):
         if record.exc_info:
             log_message["traceback"] = traceback.format_exc().splitlines()
 
-        return json.dumps(log_message, ensure_ascii=False)
+        return json.dumps(log_message, ensure_ascii=False, cls=JsonEncoder)
 
 
 def get_logger(level: int = logging.INFO):

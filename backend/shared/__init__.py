@@ -1,6 +1,7 @@
 from .authorizer import authorizer
 from .chzzk import get_chat_channel_access_token, get_live_detail
 from .dynamodb import dynamo_to_python, python_to_dynamo
+from .json import JsonEncoder
 from .logger import get_logger
 from .middleware import middleware
 from .security import (
@@ -18,6 +19,8 @@ __all__ = [
     "get_live_detail",
     # middleware.py
     "middleware",
+    # json.py
+    "JsonEncoder",
     # logger.py
     "get_logger",
     # dynamodb.py

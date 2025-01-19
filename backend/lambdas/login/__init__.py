@@ -1,4 +1,3 @@
-import json
 import os
 
 import boto3
@@ -23,8 +22,10 @@ def handler(event, _context):
         body = LoginBody.model_validate_json(event["body"])
     except ValidationError as e:
         return {
-            "statusCode": 400,
-            "body": json.dumps(str(e), ensure_ascii=False),
+            "statusCode": 422,
+            "body": {
+                "detail": str(e),
+            },
         }
 
     response = table.query(

@@ -1,4 +1,3 @@
-import json
 import uuid
 
 import boto3
@@ -27,8 +26,10 @@ def handler(event, _context):
         params = InitRoomBody.model_validate_json(event["body"])
     except ValidationError as e:
         return {
-            "statusCode": 400,
-            "body": json.dumps(str(e), ensure_ascii=False),
+            "statusCode": 422,
+            "body": {
+                "detail": str(e),
+            },
         }
 
     live_detail = get_live_detail(params.chzzk_id, logger=logger)

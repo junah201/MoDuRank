@@ -2,6 +2,8 @@ import json
 import logging
 import traceback
 
+from shared.json import JsonEncoder
+
 
 def middleware(*, logger: logging.Logger):
     def outer(func):
@@ -25,7 +27,7 @@ def middleware(*, logger: logging.Logger):
                 )
                 res = {
                     "statusCode": 500,
-                    "body": json.dumps(str(e), ensure_ascii=False),
+                    "body": json.dumps(str(e), ensure_ascii=False, cls=JsonEncoder),
                 }
 
             res = res or {}
@@ -43,7 +45,7 @@ def middleware(*, logger: logging.Logger):
 
             body = res.get("body", "")
             if isinstance(body, dict):
-                res["body"] = json.dumps(body, ensure_ascii=False)
+                res["body"] = json.dumps(body, ensure_ascii=False, cls=JsonEncoder)
             elif isinstance(body, str):
                 res["body"] = body
 

@@ -1,4 +1,3 @@
-import json
 import os
 import uuid
 
@@ -29,9 +28,15 @@ class RegisterUserBody(BaseModel):
         default_factory=lambda: uuid.uuid4().hex,
     )
 
+    _permission: int = PrivateAttr(default=1)
+
     @computed_field(return_type=str)
     def user_id(self):
         return self._user_id
+
+    @computed_field(return_type=int)
+    def permission(self):
+        return self._permission
 
     @computed_field(return_type=str)
     def PK(self):
@@ -48,8 +53,10 @@ def handler(event, _context):
         body = RegisterUserBody.model_validate_json(event["body"])
     except ValidationError as e:
         return {
-            "statusCode": 400,
-            "body": json.dumps(str(e), ensure_ascii=False),
+            "statusCode": 422,
+            "body": {
+                "detail": str(e),
+            },
         }
 
     response = table.query(
