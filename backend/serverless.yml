@@ -54,6 +54,14 @@ functions:
           path: /users
           method: post
 
+  get_me:
+    handler: lambdas/get_me.handler
+    name: get_me
+    events:
+      - httpApi:
+          path: /users/me
+          method: get
+
   login:
     handler: lambdas/login.handler
     name: login
