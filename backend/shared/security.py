@@ -28,6 +28,10 @@ def create_access_token(
     return jwt.encode(data, key=JWT_SECRET_KEY, algorithm=algorithm)
 
 
+def verify_access_token(token: str) -> dict:
+    return jwt.decode(token, key=JWT_SECRET_KEY, algorithms=[ALGORITHM])
+
+
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 

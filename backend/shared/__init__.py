@@ -1,3 +1,4 @@
+from .authorizer import authorizer
 from .chzzk import get_chat_channel_access_token, get_live_detail
 from .dynamodb import dynamo_to_python, python_to_dynamo
 from .logger import get_logger
@@ -10,6 +11,8 @@ from .security import (
 )
 
 __all__ = [
+    # authorizer.py
+    "authorizer",
     # chzzk.py
     "get_chat_channel_access_token",
     "get_live_detail",
