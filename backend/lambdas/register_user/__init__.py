@@ -24,15 +24,15 @@ class RegisterUserBody(BaseModel):
     password: str = Field(min_length=8, max_length=32)
     nickname: str = Field(min_length=2, max_length=32)
 
-    _user_id: str = PrivateAttr(
+    _id: str = PrivateAttr(
         default_factory=lambda: uuid.uuid4().hex,
     )
 
     _permission: int = PrivateAttr(default=1)
 
     @computed_field(return_type=str)
-    def user_id(self):
-        return self._user_id
+    def id(self):
+        return self._id
 
     @computed_field(return_type=int)
     def permission(self):
@@ -40,11 +40,11 @@ class RegisterUserBody(BaseModel):
 
     @computed_field(return_type=str)
     def PK(self):
-        return f"USER#{self.user_id}"
+        return f"USER#{self.id}"
 
     @computed_field(return_type=str)
     def SK(self):
-        return f"USER#{self.user_id}"
+        return f"USER#{self.id}"
 
 
 @middleware(logger=logger)
@@ -86,7 +86,7 @@ def handler(_event, _context, body: Annotated[RegisterUserBody, Body]):
     logger.info(
         {
             "TYPE": "USER_REGISTER_SUCCESS",
-            "user_id": user_data["user_id"],
+            "id": user_data["id"],
             "email": user_data["email"],
         }
     )

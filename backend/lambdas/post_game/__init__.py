@@ -15,7 +15,7 @@ from pydantic import (
     model_validator,
 )
 
-from shared import Body, get_logger, middleware
+from shared import Body, authorizer, get_logger, middleware
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
@@ -88,8 +88,10 @@ class PostGameBody(BaseModel):
 
 
 @middleware(logger=logger)
+@authorizer(logger=logger)
 def handler(_event, _context, body: Annotated[PostGameBody, Body]):
     game_data = body.model_dump()
+    game_data["user_id"] = _event["requestContext"]["user"]["id"]
 
     response = table.put_item(Item=game_data)
 

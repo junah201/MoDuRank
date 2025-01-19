@@ -18,7 +18,7 @@ class GetUserByIdPathParams(BaseModel):
 
 
 class UserPublic(BaseModel):
-    user_id: str
+    id: str
     email: str
     nickname: str
     permission: int

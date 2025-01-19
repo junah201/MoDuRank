@@ -12,7 +12,7 @@ logger = get_logger()
 
 
 class UserPublic(BaseModel):
-    user_id: str
+    id: str
     email: str
     nickname: str
     permission: int

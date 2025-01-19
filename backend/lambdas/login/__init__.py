@@ -48,7 +48,7 @@ def handler(_event, _context, body: Annotated[LoginBody, Body]):
 
     token = create_access_token(
         {
-            "sub": user["user_id"],
+            "sub": user["id"],
             "email": user["email"],
         }
     )

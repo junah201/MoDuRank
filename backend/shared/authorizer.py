@@ -69,7 +69,7 @@ def authorizer(
                 logger.info(
                     {
                         "type": "AUTHORIZER",
-                        "user_id": user["user_id"],
+                        "user_id": user["id"],
                         "email": user["email"],
                     }
                 )
