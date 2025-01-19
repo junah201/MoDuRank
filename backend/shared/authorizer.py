@@ -17,11 +17,13 @@ def default_permission_checker(permission: int | Decimal):
     return has_permission(permission, Permission.USER)
 
 
-def authorizer(*, logger: logging.Logger):
-    def outer(
-        func, permission: Callable[[int | Decimal], bool] = default_permission_checker
-    ):
-        def inner(event, context):
+def authorizer(
+    *,
+    logger: logging.Logger,
+    permission: Callable[[int | Decimal], bool] = default_permission_checker,
+):
+    def outer(func):
+        def inner(event, _context):
             token = event.get("headers", {}).get("authorization", None)
 
             if not token:
@@ -72,7 +74,7 @@ def authorizer(*, logger: logging.Logger):
                     }
                 )
 
-                return func(event, context)
+                return func(event, _context)
             except jwt.ExpiredSignatureError:
                 return {
                     "statusCode": 401,
