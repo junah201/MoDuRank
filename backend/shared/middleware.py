@@ -5,6 +5,7 @@ import os
 import traceback
 from collections.abc import Callable
 from decimal import Decimal
+from functools import wraps
 
 import boto3
 import jwt
@@ -18,8 +19,53 @@ dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
 
 
-def middleware(*, logger: logging.Logger, authorizer: Callable[[int | Decimal], bool] | None = None):
+def response_jsonify():
     def outer(func):
+        @wraps(func)
+        def inner(event, _context):
+            res = func(event, _context)
+
+            res = res or {}
+            res["headers"] = res.get("headers", {})
+            res["headers"]["Access-Control-Allow-Origin"] = "*"
+            res["headers"]["Content-Type"] = "application/json"
+
+            if isinstance(res.get("body", ""), dict):
+                res["body"] = json.dumps(res["body"], ensure_ascii=False, cls=JsonEncoder)
+
+            return res
+
+        return inner
+
+    return outer
+
+
+def error_handler(logger: logging.Logger):
+    def outer(func):
+        @wraps(func)
+        def inner(event, _context):
+            try:
+                return func(event, _context)
+            except Exception as e:
+                logger.error(
+                    {"type": "UNHANDLED_ERROR", "error": str(e), "traceback": traceback.format_exc().splitlines()}
+                )
+
+                return {
+                    "statusCode": 500,
+                    "body": {
+                        "detail": e,
+                    },
+                }
+
+        return inner
+
+    return outer
+
+
+def log_request_and_response(logger: logging.Logger):
+    def outer(func):
+        @wraps(func)
         def inner(event, _context):
             # Log request
             logger.info(
@@ -29,7 +75,35 @@ def middleware(*, logger: logging.Logger, authorizer: Callable[[int | Decimal], 
                 }
             )
 
-            # Authorizer
+            res = func(event, _context)
+
+            res = res or {}
+            res["headers"] = res.get("headers", {})
+            res["headers"]["Access-Control-Allow-Origin"] = "*"
+            res["headers"]["Content-Type"] = "application/json"
+
+            # Log response
+            logger.info(
+                {
+                    "type": "RESPONSE",
+                    "response": res,
+                }
+            )
+
+            if isinstance(res.get("body", ""), dict):
+                res["body"] = json.dumps(res["body"], ensure_ascii=False, cls=JsonEncoder)
+
+            return res
+
+        return inner
+
+    return outer
+
+
+def authorize(logger: logging.Logger, authorizer: Callable[[int | Decimal], bool] | None = None):
+    def outer(func):
+        @wraps(func)
+        def inner(event, _context):
             if authorizer:
                 token = event.get("headers", {}).get("authorization", None)
 
@@ -95,11 +169,45 @@ def middleware(*, logger: logging.Logger, authorizer: Callable[[int | Decimal], 
                         },
                     }
 
-            # Parse parameters
-            signature = inspect.signature(func)
+            return func(event, _context)
+
+        return inner
+
+    return outer
+
+
+def parser(
+    logger: logging.Logger,
+    original_func: Callable,
+):
+    def outer(func):
+        @wraps(func)
+        def inner(event, _context):
+            logger.info(
+                {
+                    "type": "PARSER_EVENT",
+                    "event": event,
+                }
+            )
+
+            logger.info(
+                {
+                    "type": "ORIGINAL_FUNC",
+                    "original_func": original_func,
+                }
+            )
+
+            signature = inspect.signature(original_func)
 
             if len(signature.parameters) < 2:
                 raise ValueError("handler function must have at least 2 parameters for event, _context")
+
+            logger.info(
+                {
+                    "type": "LENGTH_OF_SIGNATURE",
+                    "length": len(signature.parameters),
+                }
+            )
 
             parsed_data = {}
             for name, param in signature.parameters.items():
@@ -112,6 +220,14 @@ def middleware(*, logger: logging.Logger, authorizer: Callable[[int | Decimal], 
                     continue
 
                 base_type, metadata, *_ = get_args(annotation)
+                logger.info(
+                    {
+                        "type": "ANNOTATION",
+                        "name": name,
+                        "base_type": base_type,
+                        "metadata": metadata,
+                    }
+                )
 
                 if not issubclass(metadata, Component):
                     raise ValueError("Annotated type hint must be subclass of Component")
@@ -121,11 +237,17 @@ def middleware(*, logger: logging.Logger, authorizer: Callable[[int | Decimal], 
 
                 try:
                     if issubclass(metadata, Body):
-                        parsed_data[name] = base_type.model_validate_json(event.get("body", "{}"))
+                        logger.info(
+                            {"type": "BODY", "name": name, "body": event.get("body", "{}"), "event_type": type(event)}
+                        )
+                        body = event.get("body", "{}")
+                        parsed_data[name] = base_type.model_validate_json(body)
                     elif issubclass(metadata, PathParams):
-                        parsed_data[name] = base_type.model_validate_json(event.get("pathParameters", "{}"))
+                        pathParameters = event.get("pathParameters", "{}")
+                        parsed_data[name] = base_type.model_validate_json(pathParameters)
                     elif issubclass(metadata, Parameter):
-                        parsed_data[name] = base_type.model_validate_json(event.get("queryStringParameters", "{}"))
+                        queryStringParameters = event.get("queryStringParameters", "{}")
+                        parsed_data[name] = base_type.model_validate_json(queryStringParameters)
                     else:
                         raise ValueError("Invalid metadata type. Must be one of Body, PathParams, Parameter")
                 except ValidationError as e:
@@ -136,42 +258,30 @@ def middleware(*, logger: logging.Logger, authorizer: Callable[[int | Decimal], 
                         },
                     }
 
-            try:
-                res = func(event, _context, **parsed_data)
-            except Exception as e:
-                logger.error(
-                    {
-                        "type": "UNHANDLED_EXCEPTION",
-                        "error": str(e),
-                        "traceback": traceback.format_exc(),
-                    },
-                )
-                res = {
-                    "statusCode": 500,
-                    "body": json.dumps(str(e), ensure_ascii=False, cls=JsonEncoder),
-                }
-
-            res = res or {}
-            res["headers"] = res.get("headers", {})
-            res["headers"]["Access-Control-Allow-Origin"] = "*"
-            res["headers"]["Content-Type"] = "application/json"
-
-            # Log response
             logger.info(
                 {
-                    "type": "RESPONSE",
-                    "response": res,
+                    "type": "PARSED_DATA",
+                    "parsed_data": parsed_data,
                 }
             )
 
-            body = res.get("body", "")
-            if isinstance(body, dict):
-                res["body"] = json.dumps(body, ensure_ascii=False, cls=JsonEncoder)
-            elif isinstance(body, str):
-                res["body"] = body
-
-            return res
+            return func(event, _context, **parsed_data)
 
         return inner
 
     return outer
+
+
+def middleware(logger: logging.Logger, authorizer: Callable[[int | Decimal], bool] | None = None):
+    def decorator(func):
+        @response_jsonify()
+        @log_request_and_response(logger)
+        @error_handler(logger)
+        @authorize(logger, authorizer)
+        @parser(logger, original_func=func)
+        def wrapped(event, context, *args, **kwargs):
+            return func(event, context, *args, **kwargs)
+
+        return wrapped
+
+    return decorator
