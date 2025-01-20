@@ -48,13 +48,13 @@ class GameYoutubeOption(GameOption):
 
 
 class PostGameBody(BaseModel):
-    _game_id: str = PrivateAttr(
+    _id: str = PrivateAttr(
         default_factory=lambda: uuid.uuid4().hex,
     )
 
     @computed_field(return_type=str)
-    def game_id(self):
-        return self._game_id
+    def id(self):
+        return self._id
 
     title: str = Field(min_length=2, max_length=128)
     description: str = Field(min_length=0, max_length=1024, default="")
@@ -62,29 +62,26 @@ class PostGameBody(BaseModel):
     options: list[GameOption] = Field(default_factory=list, description="이상형 후보 목록")
     visibility: Literal["public", "private", "friends"] = Field(default="public", description="게임 공개 범위")
     password: str | None = Field(default=None, description="친구 공개 게임 비밀번호", min_length=4, max_length=32)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     @computed_field(return_type=str)
     def PK(self):
-        return f"GAME#{self.game_id}"
+        return f"GAME#{self.id}"
 
     @computed_field(return_type=str)
     def SK(self):
-        return f"GAME#{self.game_id}"
+        return f"GAME#{self.id}"
 
     @model_validator(mode="after")
-    def validate_visibility_and_password(cls, values):
-        visibility = values.get("visibility")
-        password = values.get("password")
-
-        if visibility == "friends" and not password:
+    def validate_visibility_and_password(self):
+        if self.visibility == "friends" and not self.password:
             raise ValueError("친구 공개 게임은 비밀번호가 필요합니다.")
 
-        if visibility != "friends" and password:
+        if self.visibility != "friends" and self.password:
             raise ValueError("친구 공개 게임이 아닌 경우 비밀번호를 설정할 수 없습니다.")
 
-        return values
+        return self
 
 
 @middleware(logger=logger, authorizer=authorizer.login_required)
@@ -113,6 +110,6 @@ def handler(_event, _context, body: Annotated[PostGameBody, Body]):
         "statusCode": 200,
         "body": {
             "detail": "게임 정보를 성공적으로 등록했습니다.",
-            "game_id": game_data["game_id"],
+            "game_id": game_data["id"],
         },
     }
