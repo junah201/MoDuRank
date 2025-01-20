@@ -8,4 +8,10 @@ class JsonEncoder(json.JSONEncoder):
             return str(o)
         elif isinstance(o, type):
             return o.__name__
-        return super().default(o)
+
+        try:
+            res = super().default(o)
+        except TypeError:
+            res = str(o)
+
+        return res
