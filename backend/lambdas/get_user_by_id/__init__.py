@@ -4,8 +4,9 @@ from typing import Annotated
 import boto3
 from pydantic import BaseModel, Field
 
-from shared import Permission, authorizer, get_logger, has_permission, middleware
-from shared.parser.components import PathParams
+from shared import get_logger, middleware
+from shared.authorizer import admin_required
+from shared.parser import PathParams
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
@@ -24,11 +25,7 @@ class UserPublic(BaseModel):
     permission: int
 
 
-@middleware(logger=logger)
-@authorizer(
-    logger=logger,
-    permission=lambda permission: has_permission(permission, Permission.ADMIN),
-)
+@middleware(logger=logger, authorizer=admin_required)
 def handler(_event, _context, path_params: Annotated[GetUserByIdPathParams, PathParams]):
     response = table.get_item(
         Key={

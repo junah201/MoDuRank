@@ -87,8 +87,7 @@ class PostGameBody(BaseModel):
         return values
 
 
-@middleware(logger=logger)
-@authorizer(logger=logger)
+@middleware(logger=logger, authorizer=authorizer.login_required)
 def handler(_event, _context, body: Annotated[PostGameBody, Body]):
     game_data = body.model_dump()
     game_data["user_id"] = _event["requestContext"]["user"]["id"]

@@ -3,7 +3,8 @@ import os
 import boto3
 from pydantic import BaseModel
 
-from shared import authorizer, get_logger, middleware
+from shared import get_logger, middleware
+from shared.authorizer import login_required
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
@@ -18,8 +19,7 @@ class UserPublic(BaseModel):
     permission: int
 
 
-@middleware(logger=logger)
-@authorizer(logger=logger)
+@middleware(logger=logger, authorizer=login_required)
 def handler(event, _context):
     user = event["requestContext"]["user"]
 
