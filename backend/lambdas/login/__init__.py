@@ -1,4 +1,6 @@
+import inspect
 import os
+from collections.abc import Callable
 from typing import Annotated
 
 import boto3
@@ -12,13 +14,33 @@ table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
 logger = get_logger()
 
 
+def extract_pydantic_models(func: Callable):
+    models = []
+    signature = inspect.signature(func)
+    for param in signature.parameters.values():
+        if hasattr(param.annotation, "model_validate_json"):
+            models.append(param.annotation)
+    return models
+
+
 class LoginBody(BaseModel):
     email: EmailStr = Field(max_length=320)
     password: str = Field(min_length=8, max_length=32)
 
 
-@middleware(logger=logger)
-def handler(_event, _context, body: Annotated[LoginBody, Body]):
+@middleware("POST", "/login", logger=logger, tags=["auth"])
+def handler(
+    _event,
+    _context,
+    body: Annotated[
+        LoginBody,
+        Body(
+            openapi_examples={
+                "example": {"value": {"email": "example@gmail.com", "password": "password"}, "summary": "Login example"}
+            }
+        ),
+    ],
+):
     response = table.query(
         IndexName="GSI-email",
         KeyConditionExpression="email = :email AND begins_with(PK, :PK)",

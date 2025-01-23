@@ -6,14 +6,20 @@ import traceback
 from collections.abc import Callable
 from decimal import Decimal
 from functools import wraps
+from typing import Annotated, Literal
+from typing_extensions import Doc
 
 import boto3
 import jwt
 from pydantic import BaseModel, ValidationError
+from pydantic.fields import FieldInfo
 
 from shared.json import JsonEncoder
-from shared.parser import Body, Component, Parameter, PathParams, get_args, is_annotated
+from shared.parser import get_args, is_annotated
+from shared.parser.params import Body, Path, Query
 from shared.security import verify_access_token
+
+a = FieldInfo(min_length=32, max_length=32, alias="chzzk_id")
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
@@ -183,31 +189,10 @@ def parser(
     def outer(func):
         @wraps(func)
         def inner(event, _context):
-            logger.info(
-                {
-                    "type": "PARSER_EVENT",
-                    "event": event,
-                }
-            )
-
-            logger.info(
-                {
-                    "type": "ORIGINAL_FUNC",
-                    "original_func": original_func,
-                }
-            )
-
             signature = inspect.signature(original_func)
 
             if len(signature.parameters) < 2:
                 raise ValueError("handler function must have at least 2 parameters for event, _context")
-
-            logger.info(
-                {
-                    "type": "LENGTH_OF_SIGNATURE",
-                    "length": len(signature.parameters),
-                }
-            )
 
             parsed_data = {}
             for name, param in signature.parameters.items():
@@ -220,36 +205,51 @@ def parser(
                     continue
 
                 base_type, metadata, *_ = get_args(annotation)
-                logger.info(
-                    {
-                        "type": "ANNOTATION",
-                        "name": name,
-                        "base_type": base_type,
-                        "metadata": metadata,
-                    }
-                )
 
-                if not issubclass(metadata, Component):
-                    raise ValueError("Annotated type hint must be subclass of Component")
+                if not issubclass(metadata, Path | Query | Body):
+                    raise ValueError("Annotated type hint must be subclass of Path, Query or Body")
 
-                if not issubclass(base_type, BaseModel):
-                    raise ValueError("Annotated type hint must be subclass of BaseModel")
+                if not issubclass(base_type, BaseModel | str | int):
+                    raise ValueError("Annotated type hint must be subclass of BaseModel, str or int")
+
+                if issubclass(metadata, Path):
+                    source = event.get("pathParameters", "{}")
+                elif issubclass(metadata, Query):
+                    source = event.get("queryStringParameters", "{}")
+                elif issubclass(metadata, Body):
+                    source = event.get("body", "{}")
+                else:
+                    raise ValueError("Invalid metadata type. Must be one of Body, PathParams, Parameter")
 
                 try:
-                    if issubclass(metadata, Body):
-                        logger.info(
-                            {"type": "BODY", "name": name, "body": event.get("body", "{}"), "event_type": type(event)}
-                        )
-                        body = event.get("body", "{}")
-                        parsed_data[name] = base_type.model_validate_json(body)
-                    elif issubclass(metadata, PathParams):
-                        pathParameters = event.get("pathParameters", "{}")
-                        parsed_data[name] = base_type.model_validate_json(pathParameters)
-                    elif issubclass(metadata, Parameter):
-                        queryStringParameters = event.get("queryStringParameters", "{}")
-                        parsed_data[name] = base_type.model_validate_json(queryStringParameters)
-                    else:
-                        raise ValueError("Invalid metadata type. Must be one of Body, PathParams, Parameter")
+                    if issubclass(base_type, str | int):
+                        # TODO: Add validation for str and int
+                        parsed_data[name] = base_type(source)
+                except KeyError:
+                    return {
+                        "statusCode": 422,
+                        "body": {
+                            "detail": f"{name} is required.",
+                        },
+                    }
+                except TypeError:
+                    return {
+                        "statusCode": 422,
+                        "body": {
+                            "detail": f"{name} must be {base_type.__name__}.",
+                        },
+                    }
+                except ValueError:
+                    return {
+                        "statusCode": 422,
+                        "body": {
+                            "detail": f"{name} must be {base_type.__name__}.",
+                        },
+                    }
+
+                try:
+                    if issubclass(base_type, BaseModel):
+                        parsed_data[name] = base_type.model_validate_json(source)
                 except ValidationError as e:
                     return {
                         "statusCode": 422,
@@ -258,13 +258,6 @@ def parser(
                         },
                     }
 
-            logger.info(
-                {
-                    "type": "PARSED_DATA",
-                    "parsed_data": parsed_data,
-                }
-            )
-
             return func(event, _context, **parsed_data)
 
         return inner
@@ -272,13 +265,25 @@ def parser(
     return outer
 
 
-def middleware(logger: logging.Logger, authorizer: Callable[[int | Decimal], bool] | None = None):
+def middleware(
+    method: Literal["GET", "POST", "DELETE", "PUT", "OPTION", "PATCH"],
+    path: str,
+    *,
+    logger: logging.Logger,
+    tags: Annotated[list[str], Doc("The tags for swagger")] = [],
+    authorizer: Callable[[int | Decimal], bool] | None = None,
+):
     def decorator(func):
+        func.method = method
+        func.path = path
+        func.tags = tags
+
         @response_jsonify()
         @log_request_and_response(logger)
         @error_handler(logger)
         @authorize(logger, authorizer)
         @parser(logger, original_func=func)
+        @wraps(func)
         def wrapped(event, context, *args, **kwargs):
             return func(event, context, *args, **kwargs)
 

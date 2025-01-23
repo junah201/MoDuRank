@@ -19,7 +19,7 @@ class UserPublic(BaseModel):
     permission: int
 
 
-@middleware(logger=logger, authorizer=login_required)
+@middleware("GET", "/users/me", logger=logger, authorizer=login_required, tags=["users"])
 def handler(event, _context):
     user = event["requestContext"]["user"]
 

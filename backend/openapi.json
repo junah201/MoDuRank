@@ -1,0 +1,426 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API for api.modurank.junah.dev",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/games": {
+      "post": {
+        "summary": "handler summary",
+        "operationId": "/games-POST",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "tags": [
+          "games"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/games-POST-PostGameBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/games/{game_id}/options": {
+      "patch": {
+        "summary": "handler summary",
+        "operationId": "/games/{game_id}/options-PATCH",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 32,
+              "maxLength": 32
+            },
+            "examples": {
+              "example 1": {
+                "value": "a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5",
+                "summary": "\uac8c\uc784 ID"
+              }
+            }
+          }
+        ],
+        "tags": [
+          "games"
+        ]
+      }
+    },
+    "/login": {
+      "post": {
+        "summary": "handler summary",
+        "operationId": "/login-POST",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/login-POST-LoginBody"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "email": "example@gmail.com",
+                    "password": "password"
+                  },
+                  "summary": "Login example"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms": {
+      "post": {
+        "summary": "handler summary",
+        "operationId": "/rooms-POST",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "tags": [
+          "rooms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/rooms-POST-InitRoomBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "summary": "handler summary",
+        "operationId": "/users-POST",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "tags": [
+          "users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/users-POST-RegisterUserBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "summary": "handler summary",
+        "operationId": "/users/me-GET",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{user_id}": {
+      "get": {
+        "summary": "handler summary",
+        "operationId": "/users/{user_id}-GET",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "games-POST-PostGameBody": {
+        "$defs": {
+          "GameOption": {
+            "properties": {
+              "type": {
+                "description": "\uc774\uc0c1\ud615 \ud6c4\ubcf4 \ud0c0\uc785",
+                "enum": [
+                  "Image",
+                  "Video"
+                ],
+                "title": "Type",
+                "type": "string"
+              },
+              "title": {
+                "maxLength": 128,
+                "minLength": 2,
+                "title": "Title",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "title"
+            ],
+            "title": "GameOption",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "title": {
+            "maxLength": 128,
+            "minLength": 2,
+            "title": "Title",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 1024,
+            "minLength": 0,
+            "title": "Description",
+            "type": "string"
+          },
+          "tags": {
+            "description": "\uac8c\uc784 \ud0dc\uadf8 \ubaa9\ub85d",
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "options": {
+            "description": "\uc774\uc0c1\ud615 \ud6c4\ubcf4 \ubaa9\ub85d",
+            "items": {
+              "$ref": "#/$defs/GameOption"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "visibility": {
+            "default": "public",
+            "description": "\uac8c\uc784 \uacf5\uac1c \ubc94\uc704",
+            "enum": [
+              "public",
+              "private",
+              "friends"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "minLength": 4,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "\uce5c\uad6c \uacf5\uac1c \uac8c\uc784 \ube44\ubc00\ubc88\ud638",
+            "title": "Password"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "PostGameBody",
+        "type": "object"
+      },
+      "login-POST-LoginBody": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 320,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 32,
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginBody",
+        "type": "object"
+      },
+      "rooms-POST-InitRoomBody": {
+        "properties": {
+          "chzzk_id": {
+            "maxLength": 32,
+            "minLength": 32,
+            "title": "Chzzk Id",
+            "type": "string"
+          },
+          "game_id": {
+            "format": "uuid",
+            "title": "Game Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "chzzk_id",
+          "game_id"
+        ],
+        "title": "InitRoomBody",
+        "type": "object"
+      },
+      "users-POST-RegisterUserBody": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 320,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 32,
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 32,
+            "minLength": 2,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "nickname"
+        ],
+        "title": "RegisterUserBody",
+        "type": "object"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.modurank.junah.dev",
+      "description": "Production server"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from shared import get_logger, middleware
 from shared.authorizer import admin_required
-from shared.parser import PathParams
+from shared.parser import Path
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
@@ -25,12 +25,12 @@ class UserPublic(BaseModel):
     permission: int
 
 
-@middleware(logger=logger, authorizer=admin_required)
-def handler(_event, _context, path_params: Annotated[GetUserByIdPathParams, PathParams]):
+@middleware("GET", "/users/{user_id}", logger=logger, authorizer=admin_required, tags=["users"])
+def handler(_event, _context, user_id: Annotated[str, Path()]):
     response = table.get_item(
         Key={
-            "PK": f"USER#{path_params.user_id}",
-            "SK": f"USER#{path_params.user_id}",
+            "PK": f"USER#{user_id}",
+            "SK": f"USER#{user_id}",
         },
     )
 
@@ -45,8 +45,9 @@ def handler(_event, _context, path_params: Annotated[GetUserByIdPathParams, Path
     user = response["Item"]
 
     user_obj = UserPublic.model_validate(user)
+    user_data = user_obj.model_dump()
 
     return {
         "statusCode": 200,
-        "body": user_obj.dict(),
+        "body": user_data,
     }

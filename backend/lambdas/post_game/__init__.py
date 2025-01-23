@@ -2,7 +2,7 @@ import os
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 import boto3
 from pydantic import (
@@ -61,7 +61,7 @@ class PostGameBody(BaseModel):
     tags: list[str] = Field(default_factory=list, description="게임 태그 목록")
     options: list[GameOption] = Field(default_factory=list, description="이상형 후보 목록")
     visibility: Literal["public", "private", "friends"] = Field(default="public", description="게임 공개 범위")
-    password: str | None = Field(default=None, description="친구 공개 게임 비밀번호", min_length=4, max_length=32)
+    password: Optional[str] = Field(default=None, description="친구 공개 게임 비밀번호", min_length=4, max_length=32)
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -84,8 +84,8 @@ class PostGameBody(BaseModel):
         return self
 
 
-@middleware(logger=logger, authorizer=authorizer.login_required)
-def handler(_event, _context, body: Annotated[PostGameBody, Body]):
+@middleware("POST", "/games", logger=logger, authorizer=authorizer.login_required, tags=["games"])
+def handler(_event, _context, body: Annotated[PostGameBody, Body()]):
     game_data = body.model_dump()
     game_data["user_id"] = _event["requestContext"]["user"]["id"]
 

@@ -1,12 +1,14 @@
-from .components import Body, Component, Parameter, PathParams
+from . import params
+from .params_functions import Body, Path, Query
 from .utils import get_args, is_annotated
 
 __all__ = [
-    # components.py
+    # params.py
+    "params",
+    # params_functions.py
     "Body",
-    "Component",
-    "Parameter",
-    "PathParams",
+    "Path",
+    "Query",
     # utils.py
     "get_args",
     "is_annotated",

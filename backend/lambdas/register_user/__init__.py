@@ -47,8 +47,8 @@ class RegisterUserBody(BaseModel):
         return f"USER#{self.id}"
 
 
-@middleware(logger=logger)
-def handler(_event, _context, body: Annotated[RegisterUserBody, Body]):
+@middleware("POST", "/users", logger=logger, tags=["users"])
+def handler(_event, _context, body: Annotated[RegisterUserBody, Body()]):
     response = table.query(
         IndexName="GSI-email",
         KeyConditionExpression="email = :email AND begins_with(PK, :PK)",

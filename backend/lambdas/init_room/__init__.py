@@ -1,3 +1,4 @@
+import os
 import uuid
 from typing import Annotated
 
@@ -12,7 +13,8 @@ from shared import (
     middleware,
 )
 
-dynamodb = boto3.client("dynamodb")
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "modurank-db"))
 
 logger = get_logger()
 
@@ -22,8 +24,8 @@ class InitRoomBody(BaseModel):
     game_id: uuid.UUID = Field(alias="game_id")
 
 
-@middleware(logger=logger)
-def handler(_event, _context, body: Annotated[InitRoomBody, Body]):
+@middleware("POST", "/rooms", logger=logger, tags=["rooms"])
+def handler(_event, _context, body: Annotated[InitRoomBody, Body()]):
     live_detail = get_live_detail(body.chzzk_id, logger=logger)
 
     if live_detail is None:
